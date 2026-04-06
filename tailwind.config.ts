@@ -2,18 +2,22 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-satoshi)', 'sans-serif'], // Sets Satoshi as the default body font
+        display: ['var(--font-clash)', 'sans-serif'], // Creates a custom class for headers
+      },
       colors: {
         portfolio: {
-          bg: "#F4F0E6",      // Warm Off-White Sandbox background
-          text: "#0A192F",    // Deep Navy
-          accent: "#2F80ED",  // Electric Royal Blue (for SVG wipe)
-          dossier: "#E6C28A", // Manila Folder base
+          bg: "#F4F0E6",      
+          text: "#0A192F",    
+          accent: "#2F80ED",  
+          dossier: "#E6C28A", 
         }
       },
     },
