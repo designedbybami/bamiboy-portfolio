@@ -39,7 +39,7 @@ export default function DraggableItem({ src, alt, className, containerRef }: Dra
       className={`absolute cursor-grab ${className}`}
       style={{ perspective: 1000 }}
     >
-      <div className="relative w-24 h-24 md:w-32 md:h-32 pointer-events-none drop-shadow-sm">
+      <div className="relative w-10 h-10 sm:w-16 sm:h-16 md:w-24 md:h-24 pointer-events-none drop-shadow-sm">
         <Image 
           src={src} 
           alt={alt} 

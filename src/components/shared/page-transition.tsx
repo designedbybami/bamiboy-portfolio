@@ -92,7 +92,7 @@ export default function PageTransition() {
           d={STROKE_PATH}
           fill="none"
           stroke="#0A192F"
-          strokeWidth="420"
+          strokeWidth="500"
           strokeLinecap="round"
           strokeLinejoin="round"
           variants={prefersReducedMotion ? fadeVariants : pathVariants}

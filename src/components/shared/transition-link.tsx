@@ -6,6 +6,7 @@ interface TransitionLinkProps {
   href: string;
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
 /**
@@ -19,12 +20,16 @@ export default function TransitionLink({
   href,
   children,
   className,
+  onClick,
 }: TransitionLinkProps) {
   const { navigate } = usePageTransition();
 
   return (
     <button
-      onClick={() => navigate(href)}
+      onClick={() => {
+        onClick?.();
+        navigate(href);
+      }}
       className={className}
     >
       {children}
