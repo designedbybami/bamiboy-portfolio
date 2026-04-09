@@ -5,29 +5,28 @@ import { motion } from "framer-motion";
 export default function SvgTransition({ isActive }: { isActive: boolean }) {
   if (!isActive) return null;
 
-  // This is the "skeleton" line. It loops like a snake across the screen.
-  const snakePath = "M -20,50 Q 50,-50 120,50 Q 50,150 -20,50";
+  const transitionPath =
+    "M724.162 551.735C603.191 264.875 660.78 349.992 439.5 131C349.838 42.2654 -15.5756 598.544 116 907.5C274.71 1280.17 422.162 1008 1134.16 1043.5C1703.76 1071.9 791.162 7.73473 791.162 7.73473C791.162 7.73473 391.203 -224.346 85.4996 46.7347C-142.001 248.469 197.999 565.5 197.999 565.5C197.999 565.5 408.163 1037.83 912.163 984.235C1416.16 930.635 1201.83 290.901 1031.66 -22.2653C939.663 -122.265 760.101 -225.165 484.5 231.235C208.9 687.635 723.664 888.068 1052.16 922.735C1596.16 1205.73 1380.16 654.235 1523.66 551.735C1638.46 469.735 1604.6 167.063 1441.66 61.7346C1330.21 -10.3123 1248.56 7.93468 1102.16 46.7347C955.763 85.5347 663.162 338.401 724.162 378.235C702.495 593.735 804.5 911.2 1184.5 722C1564.5 532.8 1436.09 656.749 1430.16 536.735C1423.34 398.508 1228.06 231.335 1087.66 445.735C947.263 660.135 930.829 269.068 940.163 46.7347C940.996 -166.265 920.101 -356.5 1210.5 -134.5C1500.9 87.5 1466.33 71.068 1365.16 125.235C1352.16 159.901 1349.26 229.635 1441.66 231.235C1534.06 232.835 1389.5 341.235 1305.66 395.235C1300.16 454.401 1319.66 543.235 1441.66 425.235C1594.16 277.735 530.493 374.761 707.162 492.235";
 
   return (
-    <div className="fixed inset-0 z-[999] pointer-events-none flex items-center justify-center">
-      <svg 
-        className="w-full h-full" 
-        viewBox="0 0 100 100" 
-        preserveAspectRatio="none"
+    <div className="fixed inset-0 z-[999] pointer-events-none">
+      <svg
+        className="w-full h-full"
+        viewBox="0 0 1440 1024"
+        preserveAspectRatio="xMidYMid slice"
       >
-        <motion.path 
-          d={snakePath}
-          fill="transparent"
-          stroke="#2F80ED" // Your Electric Royal Blue
-          strokeWidth="24" // The magic! This makes the line so thick it covers the screen.
+        <motion.path
+          d={transitionPath}
+          fill="none"
+          stroke="black"
+          strokeWidth="250"
           strokeLinecap="round"
           strokeLinejoin="round"
-          // Here is the Osmo trick: we animate the line drawing itself from 0 to 100%
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ 
-            duration: 1.2, 
-            ease: [0.76, 0, 0.24, 1] // That buttery smooth Osmo acceleration
+          initial={{ pathLength: 0, opacity: 1 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{
+            pathLength: { duration: 2, ease: [0.76, 0, 0.24, 1] },
           }}
         />
       </svg>

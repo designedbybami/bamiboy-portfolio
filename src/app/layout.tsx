@@ -1,7 +1,8 @@
 import localFont from 'next/font/local'
 import './globals.css'
+import { TransitionProvider } from '@/context/transition-context'
+import PageTransition from '@/components/shared/page-transition'
 
-// Make sure these filenames exactly match what is in your public/fonts/ folder!
 const clashDisplay = localFont({
   src: '../../public/fonts/clash-display-variable.woff2',
   variable: '--font-clash',
@@ -26,7 +27,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${clashDisplay.variable} ${satoshi.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {/*
+          TransitionProvider wraps everything so any page can call navigate().
+          PageTransition lives here — outside the page tree — so it is never
+          unmounted during route changes. It persists across all navigation.
+        */}
+        <TransitionProvider>
+          {children}
+          <PageTransition />
+        </TransitionProvider>
+      </body>
     </html>
   )
 }
