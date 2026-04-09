@@ -68,7 +68,7 @@ export default function Home() {
         </h1>
 
         <p className="mt-6 text-lg max-w-lg text-center font-sans pointer-events-auto">
-          Hey, I'm Bami. I design products that feel as good as they look. Full case studies are currently in the oven 🍳, but feel free to play around with my stack or learn more about the chef below 👨🏾‍🍳✨.
+          Hey, I am Bami. I design products that feel as good as they look. Full case studies are currently in the oven 🍳, but feel free to play around with my stack or learn more about the chef below 👨🏾‍🍳✨.
         </p>
 
         {/* Call-to-Action Buttons */}
