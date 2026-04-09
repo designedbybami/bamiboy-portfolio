@@ -91,6 +91,8 @@ function renderFillSegment(segment: SignatureSegment) {
 function renderStrokeSegment(segment: SignatureSegment) {
   const id = segment.ids[0];
   const path = SIG_PATHS[id];
+  const strokeLinecap =
+    (path.strokeLinecap as "round" | "inherit" | "butt" | "square" | undefined) ?? "round";
 
   return (
     <motion.path
@@ -100,7 +102,7 @@ function renderStrokeSegment(segment: SignatureSegment) {
       fill="none"
       stroke={path.stroke ?? "black"}
       strokeWidth={path.strokeWidth ?? "6"}
-      strokeLinecap={path.strokeLinecap ?? "round"}
+      strokeLinecap={strokeLinecap}
       strokeLinejoin="round"
       initial={{ pathLength: 0, opacity: 0 }}
       animate={{ pathLength: 1, opacity: 1 }}
