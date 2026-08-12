@@ -7,9 +7,15 @@ const TARGET_VOLUME = 0.05;
 const FADE_IN_DURATION = 800;
 const FADE_OUT_DURATION = 2500;
 const WIGGLE_DURATION = 4.4;
-const FLAT_PATH = "M4 12 Q8 12 12 12 T20 12";
-const WAVE_UP = "M4 12 Q8 6.5 12 12 T20 12";
-const WAVE_DOWN = "M4 12 Q8 17.5 12 12 T20 12";
+// Four matching cubic segments form two broad, rounded lobes. Keeping the command
+// structure identical lets Motion continuously interpolate from either wave phase
+// into the flat resting line without a snap.
+const FLAT_PATH =
+  "M3 12 C5 12 5 12 8 12 C11 12 11 12 12 12 C13 12 13 12 16 12 C19 12 19 12 21 12";
+const WAVE_UP =
+  "M3 12 C5 12 5 4 8 4 C11 4 11 12 12 12 C13 12 13 20 16 20 C19 20 19 12 21 12";
+const WAVE_DOWN =
+  "M3 12 C5 12 5 20 8 20 C11 20 11 12 12 12 C13 12 13 4 16 4 C19 4 19 12 21 12";
 const FILL_BASE_DIAMETER = 16;
 const FILL_SCALE_MARGIN = 1.15;
 
