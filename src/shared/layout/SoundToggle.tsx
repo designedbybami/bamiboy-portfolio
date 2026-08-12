@@ -1,127 +1,73 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import { motion } from "motion/react";
 
-const AUDIO_VOLUME = 0.14;
+const TARGET_VOLUME = 0.05;
+const FADE_DURATION = 500;
+const FLAT_PATH = "M4 12 Q8 12 12 12 T20 12";
+const WAVE_UP = "M4 12 Q8 6.5 12 12 T20 12";
+const WAVE_DOWN = "M4 12 Q8 17.5 12 12 T20 12";
 
 export function SoundToggle() {
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const audioContextRef = useRef<AudioContext>(null);
-  const analyserRef = useRef<AnalyserNode>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode>(null);
-  const gainRef = useRef<GainNode>(null);
-  const animationFrameRef = useRef<number>(null);
-  const frequencyDataRef = useRef<Uint8Array<ArrayBuffer>>(null);
-  const prefersReducedMotion = useReducedMotion();
-  const signalLevel = useMotionValue(0);
-  const smoothedLevel = useSpring(signalLevel, { stiffness: 240, damping: 24, mass: 0.35 });
-  const path = useTransform(
-    smoothedLevel,
-    (level) => `M4 12 Q8 ${12 - level * 6.5} 12 12 T20 12`,
-  );
+  const fadeFrameRef = useRef<number>(null);
 
-  const stopVisualization = useCallback(() => {
-    if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-    signalLevel.set(0);
-  }, [signalLevel]);
-
-  const startVisualization = useCallback(() => {
-    if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    if (prefersReducedMotion) {
-      signalLevel.set(0.35);
-      return;
-    }
-
-    const analyser = analyserRef.current;
-    const audio = audioRef.current;
-    if (!analyser || !audio) return;
-
-    const frequencyData =
-      frequencyDataRef.current ?? new Uint8Array(analyser.frequencyBinCount);
-    frequencyDataRef.current = frequencyData;
-
-    const sample = () => {
-      if (audio.paused) {
-        stopVisualization();
-        return;
-      }
-
-      analyser.getByteFrequencyData(frequencyData);
-      const finalBin = Math.min(48, frequencyData.length);
-      let total = 0;
-
-      for (let index = 2; index < finalBin; index += 1) {
-        total += frequencyData[index];
-      }
-
-      const average = total / Math.max(1, finalBin - 2);
-      signalLevel.set(Math.min(1, Math.max(0.08, (average - 24) / 112)));
-      animationFrameRef.current = requestAnimationFrame(sample);
-    };
-
-    sample();
-  }, [prefersReducedMotion, signalLevel, stopVisualization]);
-
-  const ensureAudioGraph = useCallback(() => {
-    if (audioContextRef.current) return audioContextRef.current;
-
-    const audio = audioRef.current;
-    if (!audio) return null;
-
-    try {
-      const context = new AudioContext();
-      const source = context.createMediaElementSource(audio);
-      const analyser = context.createAnalyser();
-      const gain = context.createGain();
-
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.78;
-      gain.gain.value = AUDIO_VOLUME;
-
-      source.connect(analyser);
-      analyser.connect(gain);
-      gain.connect(context.destination);
-
-      audioContextRef.current = context;
-      sourceRef.current = source;
-      analyserRef.current = analyser;
-      gainRef.current = gain;
-      frequencyDataRef.current = new Uint8Array(analyser.frequencyBinCount);
-
-      return context;
-    } catch {
-      audio.volume = AUDIO_VOLUME;
-      return null;
+  const cancelFade = useCallback(() => {
+    if (fadeFrameRef.current !== null) {
+      cancelAnimationFrame(fadeFrameRef.current);
+      fadeFrameRef.current = null;
     }
   }, []);
+
+  const fadeTo = useCallback(
+    (target: number, onComplete?: () => void) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      cancelFade();
+      const initialVolume = audio.volume;
+      const startedAt = performance.now();
+
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - startedAt) / FADE_DURATION);
+        const easedProgress = 0.5 - Math.cos(Math.PI * progress) / 2;
+        audio.volume = initialVolume + (target - initialVolume) * easedProgress;
+
+        if (progress < 1) {
+          fadeFrameRef.current = requestAnimationFrame(step);
+          return;
+        }
+
+        fadeFrameRef.current = null;
+        onComplete?.();
+      };
+
+      fadeFrameRef.current = requestAnimationFrame(step);
+    },
+    [cancelFade],
+  );
 
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (playing) {
-      audio.pause();
+    if (!audio.paused) {
+      setPlaying(false);
+      fadeTo(0, () => audio.pause());
       return;
     }
 
-    const context = ensureAudioGraph();
+    cancelFade();
+    audio.volume = 0;
 
     try {
-      if (context?.state === "suspended") {
-        await context.resume();
-      }
       await audio.play();
+      fadeTo(TARGET_VOLUME);
     } catch {
       setPlaying(false);
-      stopVisualization();
+      audio.volume = 0;
     }
   };
 
@@ -129,14 +75,10 @@ export function SoundToggle() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handlePlay = () => {
-      setPlaying(true);
-      startVisualization();
-    };
-    const handleStop = () => {
-      setPlaying(false);
-      stopVisualization();
-    };
+    audio.volume = 0;
+
+    const handlePlay = () => setPlaying(true);
+    const handleStop = () => setPlaying(false);
 
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handleStop);
@@ -148,13 +90,9 @@ export function SoundToggle() {
       audio.removeEventListener("pause", handleStop);
       audio.removeEventListener("ended", handleStop);
       audio.removeEventListener("error", handleStop);
-      stopVisualization();
-      sourceRef.current?.disconnect();
-      analyserRef.current?.disconnect();
-      gainRef.current?.disconnect();
-      void audioContextRef.current?.close();
+      cancelFade();
     };
-  }, [startVisualization, stopVisualization]);
+  }, [cancelFade]);
 
   return (
     <motion.button
@@ -169,7 +107,18 @@ export function SoundToggle() {
       <audio ref={audioRef} src="/audio/nav-loop.mp3" loop preload="metadata" />
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
         <motion.path
-          d={path}
+          d={FLAT_PATH}
+          animate={{ d: playing ? [WAVE_UP, WAVE_DOWN] : FLAT_PATH }}
+          transition={
+            playing
+              ? {
+                  duration: 0.85,
+                  repeat: Infinity,
+                  repeatType: "mirror",
+                  ease: "easeInOut",
+                }
+              : { duration: FADE_DURATION / 1000, ease: "easeInOut" }
+          }
           stroke="currentColor"
           strokeWidth={1.8}
           strokeLinecap="round"
