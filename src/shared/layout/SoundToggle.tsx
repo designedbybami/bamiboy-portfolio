@@ -1,18 +1,48 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion } from "motion/react";
 
 const TARGET_VOLUME = 0.05;
-const FADE_DURATION = 500;
+const FADE_IN_DURATION = 800;
+const FADE_OUT_DURATION = 2500;
+const WIGGLE_DURATION = 4.4;
 const FLAT_PATH = "M4 12 Q8 12 12 12 T20 12";
 const WAVE_UP = "M4 12 Q8 6.5 12 12 T20 12";
 const WAVE_DOWN = "M4 12 Q8 17.5 12 12 T20 12";
+const FILL_BASE_DIAMETER = 16;
+const FILL_SCALE_MARGIN = 1.15;
+
+type FillOrigin = { x: number; y: number; scale: number };
+
+const DEFAULT_FILL_ORIGIN: FillOrigin = { x: 24, y: 24, scale: 1 };
+
+function computeFillOrigin(rect: DOMRect, clientX: number, clientY: number): FillOrigin {
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  const corners: Array<[number, number]> = [
+    [0, 0],
+    [rect.width, 0],
+    [0, rect.height],
+    [rect.width, rect.height],
+  ];
+  const maxCornerDistance = Math.max(...corners.map(([cx, cy]) => Math.hypot(cx - x, cy - y)));
+
+  return {
+    x,
+    y,
+    scale: (maxCornerDistance / (FILL_BASE_DIAMETER / 2)) * FILL_SCALE_MARGIN,
+  };
+}
 
 export function SoundToggle() {
   const [playing, setPlaying] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [fillOrigin, setFillOrigin] = useState<FillOrigin>(DEFAULT_FILL_ORIGIN);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fadeFrameRef = useRef<number>(null);
+  const pausingRef = useRef(false);
 
   const cancelFade = useCallback(() => {
     if (fadeFrameRef.current !== null) {
@@ -22,7 +52,7 @@ export function SoundToggle() {
   }, []);
 
   const fadeTo = useCallback(
-    (target: number, onComplete?: () => void) => {
+    (target: number, duration: number, onComplete?: () => void) => {
       const audio = audioRef.current;
       if (!audio) return;
 
@@ -31,7 +61,7 @@ export function SoundToggle() {
       const startedAt = performance.now();
 
       const step = (now: number) => {
-        const progress = Math.min(1, (now - startedAt) / FADE_DURATION);
+        const progress = Math.min(1, (now - startedAt) / duration);
         const easedProgress = 0.5 - Math.cos(Math.PI * progress) / 2;
         audio.volume = initialVolume + (target - initialVolume) * easedProgress;
 
@@ -53,22 +83,56 @@ export function SoundToggle() {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (!audio.paused) {
+    if (!audio.paused && !pausingRef.current) {
+      pausingRef.current = true;
       setPlaying(false);
-      fadeTo(0, () => audio.pause());
+      fadeTo(0, FADE_OUT_DURATION, () => {
+        audio.pause();
+        pausingRef.current = false;
+      });
       return;
     }
 
     cancelFade();
+    pausingRef.current = false;
+
+    if (!audio.paused) {
+      setPlaying(true);
+      fadeTo(TARGET_VOLUME, FADE_IN_DURATION);
+      return;
+    }
+
     audio.volume = 0;
 
     try {
       await audio.play();
-      fadeTo(TARGET_VOLUME);
+      fadeTo(TARGET_VOLUME, FADE_IN_DURATION);
     } catch {
       setPlaying(false);
       audio.volume = 0;
     }
+  };
+
+  const handleEnter = (event: MouseEvent<HTMLButtonElement>) => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setFillOrigin(computeFillOrigin(rect, event.clientX, event.clientY));
+    setHovered(true);
+  };
+
+  const handleLeave = (event: MouseEvent<HTMLButtonElement>) => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setFillOrigin(computeFillOrigin(rect, event.clientX, event.clientY));
+    setHovered(false);
+  };
+
+  const handleFocus = () => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      setFillOrigin(computeFillOrigin(rect, rect.left + rect.width / 2, rect.bottom));
+    }
+    setHovered(true);
   };
 
   useEffect(() => {
@@ -96,28 +160,46 @@ export function SoundToggle() {
 
   return (
     <motion.button
+      ref={buttonRef}
       layout
       type="button"
       onClick={toggle}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      onFocus={handleFocus}
+      onBlur={() => setHovered(false)}
       whileTap={{ scale: 0.9 }}
       aria-pressed={playing}
       aria-label={playing ? "Pause background music" : "Play background music"}
-      className="flex size-11 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-ink/5 text-ink/70 transition-colors duration-300 hover:bg-primary hover:text-white sm:size-12"
+      className={`relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-ink/5 transition-colors duration-300 sm:size-12 ${
+        hovered ? "text-white" : "text-ink/70"
+      }`}
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute rounded-full bg-primary transition-transform duration-500 ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none"
+        style={{
+          left: fillOrigin.x,
+          top: fillOrigin.y,
+          width: FILL_BASE_DIAMETER,
+          height: FILL_BASE_DIAMETER,
+          transform: `translate(-50%, -50%) scale(${hovered ? fillOrigin.scale : 0})`,
+        }}
+      />
       <audio ref={audioRef} src="/audio/nav-loop.mp3" loop preload="metadata" />
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <svg className="relative z-10" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
         <motion.path
           d={FLAT_PATH}
           animate={{ d: playing ? [WAVE_UP, WAVE_DOWN] : FLAT_PATH }}
           transition={
             playing
               ? {
-                  duration: 0.85,
+                  duration: WIGGLE_DURATION,
                   repeat: Infinity,
                   repeatType: "mirror",
                   ease: "easeInOut",
                 }
-              : { duration: FADE_DURATION / 1000, ease: "easeInOut" }
+              : { duration: FADE_OUT_DURATION / 1000, ease: "easeInOut" }
           }
           stroke="currentColor"
           strokeWidth={1.8}
