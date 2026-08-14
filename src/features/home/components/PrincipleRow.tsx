@@ -22,8 +22,8 @@ function Subtitle({ subtitle }: { subtitle: PrincipleItem["subtitle"] }) {
   return (
     <>
       {subtitle.map((segment, i) => {
-        if (segment.bold) return <strong key={i} className="font-semibold text-ink">{segment.text}</strong>;
-        if (segment.italic) return <em key={i}>{segment.text}</em>;
+        if ("bold" in segment && segment.bold) return <strong key={i} className="font-semibold text-ink">{segment.text}</strong>;
+        if ("italic" in segment && segment.italic) return <em key={i}>{segment.text}</em>;
         return <span key={i}>{segment.text}</span>;
       })}
     </>
