@@ -20,7 +20,11 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+CLAUDE.md
 /docs
+/inspo
+STANDARDS.md
+
 
 # vercel
 .vercel
@@ -28,3 +32,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# brainstorming skill's visual-companion mockups
+/.superpowers/
