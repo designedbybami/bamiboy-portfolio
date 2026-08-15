@@ -43,13 +43,16 @@ export const footerCopy = {
 // Brand colors, used for the playground's clickable social chips (each in its own real brand
 // color, not the site's monochrome icon treatment). Handle/URL varies per platform (not every
 // platform uses @bamiboy_), each confirmed directly rather than assumed from the others.
+// `platform` is the stable analytics id (social_click's social_platform), deliberately decoupled
+// from `label` (display text, could change e.g. "Twitter" -> "X") so a copy tweak never silently
+// changes what lands in GA4.
 export const footerSocials = [
-  { label: "LinkedIn", href: "https://linkedin.com/in/akinadeboluwatife", icon: "/images/socials/linkedin.svg", brandColor: "#0A66C2" },
-  { label: "Twitter", href: "https://x.com/bamiboy_", icon: "/images/socials/x.svg", brandColor: "#000000" },
-  { label: "TikTok", href: "https://www.tiktok.com/@bami.boy", icon: "/images/socials/tiktok.svg", brandColor: "#000000" },
-  { label: "YouTube", href: "https://www.youtube.com/@DesignedbyBami", icon: "/images/socials/youtube.svg", brandColor: "#FF0000" },
-  { label: "Instagram", href: "https://instagram.com/bamiboy_", icon: "/images/socials/instagram.svg", brandColor: "#E1306C" },
-  { label: "GitHub", href: "https://github.com/designedbybami", icon: "/images/socials/github.svg", brandColor: "#181717" },
+  { label: "LinkedIn", platform: "linkedin", href: "https://linkedin.com/in/akinadeboluwatife", icon: "/images/socials/linkedin.svg", brandColor: "#0A66C2" },
+  { label: "Twitter", platform: "twitter", href: "https://x.com/bamiboy_", icon: "/images/socials/x.svg", brandColor: "#000000" },
+  { label: "TikTok", platform: "tiktok", href: "https://www.tiktok.com/@bami.boy", icon: "/images/socials/tiktok.svg", brandColor: "#000000" },
+  { label: "YouTube", platform: "youtube", href: "https://www.youtube.com/@DesignedbyBami", icon: "/images/socials/youtube.svg", brandColor: "#FF0000" },
+  { label: "Instagram", platform: "instagram", href: "https://instagram.com/bamiboy_", icon: "/images/socials/instagram.svg", brandColor: "#E1306C" },
+  { label: "GitHub", platform: "github", href: "https://github.com/designedbybami", icon: "/images/socials/github.svg", brandColor: "#181717" },
 ] as const;
 
 // `accent` is an "r,g,b" triplet (not a hex/Tailwind token) so it can be dropped straight into an

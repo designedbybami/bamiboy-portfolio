@@ -1,7 +1,8 @@
 type AnalyticsEvent =
   | { event: "work_view"; project_name: string; project_type: string; presentation_type: "case_study" | "showcase" }
   | { event: "linkedin_click"; cta_location: string }
-  | { event: "contact_click"; cta_location: string };
+  | { event: "contact_click"; cta_location: string }
+  | { event: "social_click"; social_platform: string; cta_location: "footer" };
 
 declare global {
   interface Window {

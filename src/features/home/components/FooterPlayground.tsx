@@ -3,6 +3,7 @@
 import { Icon } from "@iconify/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useReducedMotion } from "motion/react";
+import { trackEvent } from "@/shared/lib/analytics";
 import { PLAYGROUND_HOBBY_CHIPS, type PlaygroundChip } from "../footer-playground-data";
 import { footerSocials } from "../copy";
 
@@ -28,9 +29,16 @@ function buildSocialChips(): PlaygroundChip[] {
     image: social.icon,
     color: social.brandColor,
     href: social.href,
+    platform: social.platform,
     width: Math.round((110 + social.label.length * 9) * SOCIAL_SIZE_SCALE), // wider than before: label + a dedicated arrow-click target
     height: Math.round(44 * SOCIAL_SIZE_SCALE),
   }));
+}
+
+// Reused by both real navigation paths below (tap-detected pointer-up, and the arrow's own keyboard handler).
+function trackSocialClick(chip: PlaygroundChip) {
+  if (!chip.platform) return;
+  trackEvent({ event: "social_click", social_platform: chip.platform, cta_location: "footer" });
 }
 
 type FooterPlaygroundProps = {
@@ -271,6 +279,7 @@ export function FooterPlayground({ className = "" }: FooterPlaygroundProps) {
 
     const moved = Math.hypot(event.clientX - drag.startClientX, event.clientY - drag.startClientY);
     if (drag.isArrowPress && moved < CLICK_DRAG_THRESHOLD && chip.href) {
+      trackSocialClick(chip);
       window.open(chip.href, "_blank", "noopener,noreferrer");
     }
   };
@@ -348,6 +357,7 @@ export function FooterPlayground({ className = "" }: FooterPlaygroundProps) {
               onKeyDown={(event) => {
                 if (event.key !== "Enter" && event.key !== " ") return;
                 event.preventDefault();
+                trackSocialClick(chip);
                 window.open(chip.href, "_blank", "noopener,noreferrer");
               }}
               className="ml-1 flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white/20"
