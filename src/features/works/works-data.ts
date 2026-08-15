@@ -1,10 +1,16 @@
 // Placeholder data, replace with real case study content.
+export type PresentationType = "case_study" | "showcase";
+
 export type Work = {
   slug: string;
   title: string;
   summary: string;
   tags: string[];
   image: string;
+  /** GA4 dimension via work_view, keep values consistent across the dataset. */
+  projectType: string;
+  /** GA4 dimension via work_view, exact "case_study" | "showcase" only, see docs/analytics-measurement-spec.md. */
+  presentationType: PresentationType;
 };
 
 export const works: Work[] = [
@@ -14,6 +20,8 @@ export const works: Work[] = [
     summary: "AI-powered commerce platform.",
     tags: ["AI Commerce", "Product Design", "Design Systems"],
     image: "/images/works/item-1.jpg",
+    projectType: "AI Commerce",
+    presentationType: "case_study",
   },
   {
     slug: "fardelins",
@@ -21,6 +29,8 @@ export const works: Work[] = [
     summary: "B2B logistics management platform.",
     tags: ["B2B Logistics", "Founding Design", "Product Design"],
     image: "/images/works/item-2.jpg",
+    projectType: "B2B Logistics",
+    presentationType: "case_study",
   },
   {
     slug: "kikai",
@@ -28,6 +38,8 @@ export const works: Work[] = [
     summary: "AI-powered opportunity workspace.",
     tags: ["AI Career Tools", "Concept", "Brand"],
     image: "/images/works/item-3.jpg",
+    projectType: "AI Career Tools",
+    presentationType: "case_study",
   },
   {
     slug: "leadsprofile",
@@ -35,6 +47,9 @@ export const works: Work[] = [
     summary: "Lead distribution and management platform.",
     tags: ["B2B", "Lead Management", "Product Design"],
     image: "/images/works/item-4.jpg",
+    projectType: "B2B",
+    // docs/bami-content-hub.md lists LeadsProfile under "showcase-level detail, full case-study depth wasn't gathered", not the planned Khaime/Kikai/Fardelins case studies.
+    presentationType: "showcase",
   },
 ];
 

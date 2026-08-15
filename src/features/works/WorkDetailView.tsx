@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { TrackCaseStudyView } from "./components/TrackCaseStudyView";
+import { TrackWorkView } from "./components/TrackWorkView";
 import { getWorkBySlug } from "./works-data";
 
 export function WorkDetailView({ slug }: { slug: string }) {
@@ -8,7 +8,7 @@ export function WorkDetailView({ slug }: { slug: string }) {
 
   return (
     <section>
-      <TrackCaseStudyView projectName={work.title} projectType={work.tags[0]} />
+      <TrackWorkView slug={work.slug} projectName={work.title} projectType={work.projectType} presentationType={work.presentationType} />
       <h1>{work.title}</h1>
       <p>{work.summary}</p>
     </section>

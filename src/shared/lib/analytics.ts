@@ -1,5 +1,5 @@
 type AnalyticsEvent =
-  | { event: "case_study_view"; project_name: string; project_type: string }
+  | { event: "work_view"; project_name: string; project_type: string; presentation_type: "case_study" | "showcase" }
   | { event: "linkedin_click"; cta_location: string }
   | { event: "contact_click"; cta_location: string };
 
