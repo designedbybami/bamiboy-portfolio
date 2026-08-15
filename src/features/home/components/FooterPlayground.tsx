@@ -21,6 +21,7 @@ const SOCIAL_SIZE_SCALE = 1.25;
 const SOCIAL_GAP = 16;
 const CLICK_DRAG_THRESHOLD = 6; // px of pointer movement below which a pointerup counts as a tap
 const MAX_THROW_SPEED = 45; // clamps a fast flick to something the walls can still absorb cleanly
+const VELOCITY_SMOOTHING = 0.35; // EMA weight per pointermove sample, smooths a noisy last-instant delta into a throw that reflects the real swing
 
 function buildSocialChips(): PlaygroundChip[] {
   return footerSocials.map((social) => ({
@@ -112,6 +113,34 @@ export function FooterPlayground({ className = "" }: FooterPlaygroundProps) {
     });
   }, [chips]);
 
+  // Belt-and-suspenders on top of the drag clamp above: catches any body that ends up outside the
+  // container by some other means (corner-overlap gaps between the static wall bodies, a future
+  // tuning change letting a throw exceed WALL_THICKNESS in one tick, etc). A chip should never be
+  // unrecoverable, so this runs every physics tick regardless of how confident the drag-time fix is.
+  const enforceBounds = useCallback(
+    (Matter: typeof import("matter-js"), width: number, height: number) => {
+      bodiesRef.current.forEach((body, id) => {
+        const chip = chips.find((c) => c.id === id);
+        if (!chip) return;
+
+        const minX = chip.width / 2;
+        const maxX = width - chip.width / 2;
+        const minY = chip.height / 2;
+        const maxY = height - chip.height / 2;
+        const { x, y } = body.position;
+        const clampedX = clamp(x, minX, maxX);
+        const clampedY = clamp(y, minY, maxY);
+        const hitX = clampedX !== x;
+        const hitY = clampedY !== y;
+        if (!hitX && !hitY) return;
+
+        Matter.Body.setPosition(body, { x: clampedX, y: clampedY });
+        Matter.Body.setVelocity(body, { x: hitX ? 0 : body.velocity.x, y: hitY ? 0 : body.velocity.y });
+      });
+    },
+    [chips]
+  );
+
   // Runs once physics has actually loaded and chips have re-rendered into `absolute` mode with
   // fresh refs attached — the initial placement, so there's no frame where they're
   // absolute-positioned but still sitting at the container's default (0,0) corner.
@@ -184,7 +213,10 @@ export function FooterPlayground({ className = "" }: FooterPlaygroundProps) {
 
       Matter.World.add(engine.world, [ground, ceiling, leftWall, rightWall, ...bodies.values()]);
 
-      Matter.Events.on(engine, "afterUpdate", syncTransforms);
+      Matter.Events.on(engine, "afterUpdate", () => {
+        enforceBounds(Matter, width, height);
+        syncTransforms();
+      });
       Matter.Runner.run(runner, engine);
 
       // Switches chips from the static flex layout to `absolute` physics mode. The sync effect
@@ -205,7 +237,7 @@ export function FooterPlayground({ className = "" }: FooterPlaygroundProps) {
       cancelled = true;
       cleanup?.();
     };
-  }, [ready, shouldReduceMotion, chips, socialChips, syncTransforms]);
+  }, [ready, shouldReduceMotion, chips, socialChips, syncTransforms, enforceBounds]);
 
   // The arrow's own onPointerDown (below) only sets `arrowPressedRef` — it deliberately doesn't
   // call setPointerCapture itself. Pointer capture redirects ALL subsequent move/up events to
@@ -249,11 +281,20 @@ export function FooterPlayground({ className = "" }: FooterPlaygroundProps) {
     const rect = container.getBoundingClientRect();
     const now = performance.now();
     const dt = Math.max(now - drag.lastT, 1);
-    const nextX = event.clientX - rect.left - drag.offsetX;
-    const nextY = event.clientY - rect.top - drag.offsetY;
+    // Pointer capture keeps sending move events even once the cursor leaves the container (or the
+    // page), so the raw target position has to be clamped here, not left to the walls: Body.setPosition
+    // teleports instantly, bypassing wall collision entirely, a chip dragged past a wall this way is
+    // gone for good since nothing ever pushes it back. Clamping keeps it pinned at the edge instead.
+    const nextX = clamp(event.clientX - rect.left - drag.offsetX, chip.width / 2, rect.width - chip.width / 2);
+    const nextY = clamp(event.clientY - rect.top - drag.offsetY, chip.height / 2, rect.height - chip.height / 2);
 
-    drag.velocityX = ((event.clientX - drag.lastX) / dt) * 16; // approximate px/physics-tick
-    drag.velocityY = ((event.clientY - drag.lastY) / dt) * 16;
+    // EMA, not the raw single-sample delta: the last pointermove before release is often near-zero
+    // (natural deceleration approaching the release point), so a raw last-delta throw reads as limp
+    // regardless of the actual preceding swing. Blending keeps release velocity representative of it.
+    const instantVelocityX = ((event.clientX - drag.lastX) / dt) * 16; // approximate px/physics-tick
+    const instantVelocityY = ((event.clientY - drag.lastY) / dt) * 16;
+    drag.velocityX += (instantVelocityX - drag.velocityX) * VELOCITY_SMOOTHING;
+    drag.velocityY += (instantVelocityY - drag.velocityY) * VELOCITY_SMOOTHING;
     drag.lastX = event.clientX;
     drag.lastY = event.clientY;
     drag.lastT = now;
