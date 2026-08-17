@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { trackEvent } from "@/shared/lib/analytics";
 import { routes, siteConfig } from "@/shared/lib/site-config";
@@ -9,8 +9,10 @@ import { useScrolled } from "@/shared/lib/useScrolled";
 import { useSoundToggle } from "@/shared/lib/useSoundToggle";
 import { WAVE_DOWN_PATH, WAVE_FLAT_PATH, WAVE_UP_PATH, WAVE_WIGGLE_DURATION } from "@/shared/lib/wave-path";
 import { Button } from "@/shared/ui/Button";
+import { DirectionalHoverText, type HoverEdge } from "@/shared/ui/DirectionalHoverText";
 import { DirectionalLinkRow } from "@/shared/ui/DirectionalLinkRow";
 import { MenuToggleIcon } from "@/shared/ui/MenuToggleIcon";
+import { ScatterText } from "@/shared/ui/ScatterText";
 import { NAV_CONTAINER_CLASSNAME, NAV_MAX_WIDTH_CLASSNAME, NAV_SCROLL_OFFSET } from "./nav-layout";
 import { SoundToggle } from "./SoundToggle";
 
@@ -22,6 +24,27 @@ const links = [
 
 // Get in touch has no special button chrome here, just another line in the same list.
 const mobileLinks = [...links, { href: `mailto:${siteConfig.email}`, label: "Get in touch" }];
+
+// Same directional text-roll as Button/DirectionalHoverText, one hover state owned here (the Link) driving which edge the roll enters from.
+function NavLink({ href, label, className }: { href: string; label: string; className: string }) {
+  const ref = useRef<HTMLAnchorElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [edge, setEdge] = useState<HoverEdge>("bottom");
+
+  const handleEnter = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (rect) setEdge(event.clientY < rect.top + rect.height / 2 ? "top" : "bottom");
+    setHovered(true);
+  };
+
+  return (
+    <Link ref={ref} href={href} onMouseEnter={handleEnter} onMouseLeave={() => setHovered(false)}>
+      <DirectionalHoverText hovered={hovered} edge={edge} className={className}>
+        {label}
+      </DirectionalHoverText>
+    </Link>
+  );
+}
 
 const LAYOUT_TRANSITION = { type: "spring", stiffness: 300, damping: 30 } as const; // shared by every layout-driven element so the bar morphs as one motion
 
@@ -105,6 +128,7 @@ export function SiteNav() {
   const scrolled = useScrolled(NAV_SCROLL_OFFSET);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [soundRowHovered, setSoundRowHovered] = useState(false);
+  const [logoHovered, setLogoHovered] = useState(false);
   const { playing: soundPlaying, toggle: toggleSound, audioRef: soundAudioRef, fadeOutDuration: soundFadeOutDuration } = useSoundToggle();
 
   const closeMenu = () => setMobileMenuOpen(false);
@@ -203,9 +227,15 @@ export function SiteNav() {
 
             <Link
               href={routes.home}
-              className={`relative font-display text-lg font-semibold tracking-wide ${scrolled ? "text-paper" : "text-white mix-blend-difference"}`}
+              onMouseEnter={() => setLogoHovered(true)}
+              onMouseLeave={() => setLogoHovered(false)}
+              className="relative"
             >
-              {siteConfig.logoText}
+              <ScatterText
+                text={siteConfig.logoText}
+                hovered={logoHovered}
+                className={`font-display text-lg font-semibold tracking-wide ${scrolled ? "text-paper" : "text-white mix-blend-difference"}`}
+              />
             </Link>
 
             <motion.ul
@@ -215,14 +245,13 @@ export function SiteNav() {
             >
               {links.map((link) => (
                 <li key={link.href}>
-                  <Link
+                  <NavLink
                     href={link.href}
+                    label={link.label}
                     className={`transition-colors duration-500 ${
                       scrolled ? "text-paper/80 hover:text-paper" : "text-white/70 mix-blend-difference hover:text-white"
                     }`}
-                  >
-                    {link.label}
-                  </Link>
+                  />
                 </li>
               ))}
             </motion.ul>
