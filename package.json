@@ -24,10 +24,12 @@
     "web-haptics": "^0.0.6"
   },
   "devDependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "@types/matter-js": "^0.20.2",
     "@types/node": "^20",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@types/three": "^0.185.4",
     "autoprefixer": "^10",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.0",
