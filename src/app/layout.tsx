@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${clashDisplay.variable} ${parkinsans.variable} ${caveat.variable}`}>
-      <body className="bg-paper font-sans text-ink antialiased">
+      <body className="bg-ink font-sans text-ink antialiased" suppressHydrationWarning>
         <GoogleTagManager />
         <TransitionProvider>
           <BottomBlur />
