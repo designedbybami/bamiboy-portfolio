@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { TickFrame } from "@/shared/ui/TickFrame";
+import { SECTION_PADDING_CLASSNAME } from "@/shared/ui/frame-constants";
 import { PrincipleMotif } from "./PrincipleMotif";
 import type { principlesCopy } from "../copy";
 
@@ -47,7 +48,7 @@ export function PrincipleRow({ item, index }: PrincipleRowProps) {
       initial={{ backgroundColor: `rgba(${rgb},0.05)` }}
       whileHover={{ backgroundColor: `rgba(${rgb},0.14)` }}
       transition={{ duration: 0.4, ease: EASE }}
-      className="relative overflow-hidden px-6 py-16 sm:px-12 sm:py-24"
+      className={`relative overflow-hidden py-16 sm:py-24 ${SECTION_PADDING_CLASSNAME}`}
     >
       <span className="absolute left-6 top-6 text-xs text-ink/30 sm:left-12 sm:top-8">{String(index + 1).padStart(2, "0")}</span>
 

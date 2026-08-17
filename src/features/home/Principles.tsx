@@ -3,6 +3,7 @@
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import { DraftLine } from "@/shared/ui/DraftLine";
 import { SectionCenterTicks } from "@/shared/ui/SectionCenterTicks";
+import { SECTION_PADDING_CLASSNAME } from "@/shared/ui/frame-constants";
 import { PrincipleRow } from "./components/PrincipleRow";
 import { principlesCopy } from "./copy";
 
@@ -24,7 +25,7 @@ export function Principles() {
     <section className="relative flex flex-col bg-paper">
       <SectionCenterTicks />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-10 pt-16 sm:px-12 sm:pb-12 sm:pt-24">
+      <div className={`relative z-10 mx-auto w-full max-w-6xl pb-10 pt-16 sm:pb-12 sm:pt-24 ${SECTION_PADDING_CLASSNAME}`}>
         <motion.div
           initial={shouldReduceMotion ? "visible" : "hidden"}
           whileInView="visible"

@@ -11,7 +11,7 @@ export const heroCopy = {
 
 // Drawn from the content hub's "throughline" paragraph, not invented.
 export const aboutTeaserCopy = {
-  headline: "I design products end-to-end and obsess over motion and interaction, I want you to feel what you use, not just look at it.",
+  headline: "I design products end-to-end and obsess over motion and interaction, I love when users feels what they use, not just for the looks of it.",
 } as const;
 
 // Companies from the content hub's Career Timeline, real employers only (not client projects).
@@ -21,8 +21,7 @@ export const companiesCopy = {
 } as const;
 
 export const featuredWorkCopy = {
-  eyebrow: "Selected work",
-  headline: "Featured Work",
+  headlineLines: ["Featured", "Work"] as const, // rendered as two explicit lines, not left to wrap naturally
   description: "A few products I've shaped end to end, from early decisions down to the small interaction details.",
   viewAllLabel: "View all work",
 } as const;
