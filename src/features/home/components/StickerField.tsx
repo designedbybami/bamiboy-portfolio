@@ -21,6 +21,34 @@ const STICKER_DEFS: StickerDef[] = [
 
 const MOBILE_HIDDEN_CLASSNAME = "hidden sm:block";
 
+const BASE_STICKER_SIZE = 40; // DraggableSticker's own default
+type Tier = "mobile" | "tablet" | "desktop";
+const SIZE_MULTIPLIER: Record<Tier, number> = { mobile: 1.2, tablet: 1.3, desktop: 1.5 };
+
+// sm(640)/lg(1024) breakpoints, not device detection, so a resized window matches its actual width.
+function useStickerTier(): Tier {
+  const [tier, setTier] = useState<Tier>("desktop");
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    const tabletQuery = window.matchMedia("(min-width: 640px) and (max-width: 1023px)");
+    const update = () => {
+      if (mobileQuery.matches) setTier("mobile");
+      else if (tabletQuery.matches) setTier("tablet");
+      else setTier("desktop");
+    };
+    update();
+    mobileQuery.addEventListener("change", update);
+    tabletQuery.addEventListener("change", update);
+    return () => {
+      mobileQuery.removeEventListener("change", update);
+      tabletQuery.removeEventListener("change", update);
+    };
+  }, []);
+
+  return tier;
+}
+
 type StickerLayout = StickerDef & { style: CSSProperties };
 
 function shuffle<T>(items: T[]): T[] {
@@ -78,6 +106,8 @@ export function StickerField({ dragBoundsRef }: StickerFieldProps) {
   const [stickers, setStickers] = useState<StickerLayout[] | null>(null);
   const registry = useRef(new Map<string, StickerRegistration>());
   const resolvedPairs = useRef(new Set<string>());
+  const tier = useStickerTier();
+  const stickerSize = BASE_STICKER_SIZE * SIZE_MULTIPLIER[tier];
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Math.random() can't run during SSR without a client mismatch (gotcha #1)
@@ -138,6 +168,7 @@ export function StickerField({ dragBoundsRef }: StickerFieldProps) {
           id={sticker.src}
           src={sticker.src}
           alt={sticker.alt}
+          size={stickerSize}
           restRotation={sticker.restRotation}
           dragConstraintsRef={dragBoundsRef}
           style={sticker.style}
